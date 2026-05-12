@@ -64,15 +64,11 @@
     .app {
       width: min(1080px, 100%);
       margin: 0 auto;
-      padding: max(16px, env(safe-area-inset-top)) 16px max(22px, env(safe-area-inset-bottom));
+      padding: max(10px, env(safe-area-inset-top)) 16px max(22px, env(safe-area-inset-bottom));
     }
 
     header {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 14px 0 18px;
+      padding: 8px 0 12px;
     }
 
     h1 {
@@ -92,21 +88,18 @@
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      justify-content: flex-end;
+      justify-content: flex-start;
     }
 
     .tabs {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      margin: 4px 0 16px;
+      margin: 0 0 16px;
       padding: 5px;
       background: rgba(255, 255, 255, 0.75);
       border: 1px solid var(--line);
       border-radius: 8px;
-      position: sticky;
-      top: env(safe-area-inset-top);
-      z-index: 5;
       backdrop-filter: blur(16px);
     }
 
@@ -295,12 +288,6 @@
       flex-direction: column;
       justify-content: space-between;
       gap: 18px;
-    }
-
-    .word-card {
-      cursor: pointer;
-      user-select: none;
-      -webkit-user-select: none;
     }
 
     .word-main {
@@ -574,6 +561,19 @@
         padding-right: 12px;
       }
 
+      header {
+        padding-top: 4px;
+        padding-bottom: 8px;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      .tabs {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
       .section,
       .card,
       .mini-panel {
@@ -604,28 +604,10 @@
         <h1>每日背单词</h1>
         <p class="subtitle">批量导入，卡片学习，自动保存进度。</p>
       </div>
-      <div class="top-actions">
-        <button class="btn ghost" id="resetTodayBtn" type="button">重置今日</button>
-        <button class="btn ghost" id="clearAllBtn" type="button">清空数据</button>
-      </div>
     </header>
-
-    <nav class="tabs" aria-label="功能页">
-      <button class="tab active" data-view="learn" type="button">学习</button>
-      <button class="tab" data-view="import" type="button">导入</button>
-      <button class="tab" data-view="review" type="button">复习</button>
-      <button class="tab" data-view="settings" type="button">发音设置</button>
-    </nav>
 
     <main>
       <section class="view active" id="view-learn">
-        <div class="stats">
-          <div class="stat"><b id="totalWords">0</b><span class="small">词库单词</span></div>
-          <div class="stat"><b id="todayTarget">20</b><span class="small">今日计划</span></div>
-          <div class="stat"><b id="todayDone">0</b><span class="small">今日已学</span></div>
-          <div class="stat"><b id="reviewCount">0</b><span class="small">待复习</span></div>
-        </div>
-
         <div id="learnEmpty" class="empty">
           <div>
             <h2>还没有单词</h2>
@@ -635,7 +617,7 @@
         </div>
 
         <div id="learnArea" class="learn-layout" hidden>
-          <article class="card word-card" id="wordCard" role="button" tabindex="0" aria-label="点击显示答案">
+          <article class="card word-card" id="wordCard">
             <div class="word-main">
               <div class="tag" id="cardMode">今日学习</div>
               <div class="word" id="cardWord">word</div>
@@ -659,7 +641,7 @@
                 <button class="btn bad" id="unknownBtn" type="button">不认识</button>
                 <button class="btn good" id="knownBtn" type="button">认识</button>
               </div>
-              <p class="small">点击卡片可显示中文意思和例句。</p>
+              <p class="small">选中例句里的英文单词后，点“加入陌生词”。</p>
             </div>
           </article>
 
@@ -683,6 +665,25 @@
               <p class="small" id="queueText">今天默认学习 20 个新单词。不认识的会进入复习列表。</p>
             </div>
           </aside>
+        </div>
+
+        <div class="section" id="learnControls">
+          <div class="stats">
+            <div class="stat"><b id="totalWords">0</b><span class="small">词库单词</span></div>
+            <div class="stat"><b id="todayTarget">20</b><span class="small">今日计划</span></div>
+            <div class="stat"><b id="todayDone">0</b><span class="small">今日已学</span></div>
+            <div class="stat"><b id="reviewCount">0</b><span class="small">待复习</span></div>
+          </div>
+          <nav class="tabs" aria-label="功能页">
+            <button class="tab active" data-view="learn" type="button">学习</button>
+            <button class="tab" data-view="import" type="button">导入</button>
+            <button class="tab" data-view="review" type="button">复习</button>
+            <button class="tab" data-view="settings" type="button">发音设置</button>
+          </nav>
+          <div class="top-actions">
+            <button class="btn ghost" id="resetTodayBtn" type="button">重置今日</button>
+            <button class="btn ghost" id="clearAllBtn" type="button">清空数据</button>
+          </div>
         </div>
       </section>
 
@@ -1446,14 +1447,6 @@ challenge	挑战	This project is a real challenge.	这个项目是一个真正�
     function bindEvents() {
       document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => showView(tab.dataset.view)));
       document.querySelectorAll("[data-jump]").forEach((btn) => btn.addEventListener("click", () => showView(btn.dataset.jump)));
-
-      els.wordCard.addEventListener("click", revealAnswer);
-      els.wordCard.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          revealAnswer();
-        }
-      });
 
       els.playWordBtn.addEventListener("click", (event) => {
         event.stopPropagation();
