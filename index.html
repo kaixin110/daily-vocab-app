@@ -317,6 +317,14 @@
       letter-spacing: 0;
     }
 
+    .phonetic {
+      color: var(--primary-dark);
+      font-size: clamp(17px, 4.8vw, 24px);
+      font-weight: 800;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
     .meaning {
       font-size: clamp(24px, 6vw, 34px);
       line-height: 1.25;
@@ -616,6 +624,7 @@
             <div class="word-main">
               <div class="tag" id="cardMode">今日学习</div>
               <div class="word" id="cardWord">word</div>
+              <div class="phonetic" id="cardPhonetic" hidden>英 /wɜːd/ 美 /wɝːd/</div>
               <div id="answerArea" hidden>
                 <div class="meaning" id="cardMeaning">中文意思</div>
                 <div class="sentence" id="cardSentence">Example sentence.</div>
@@ -663,10 +672,10 @@
             <h2>批量导入单词</h2>
             <span class="tag" id="importCount">0 行</span>
           </div>
-          <p class="hint">每行一个：英文单词 Tab 中文意思 Tab 英文例句。可选第 4 列填写音频地址，例如 <code>audio/apple.mp3</code>。</p>
-          <textarea id="importText" spellcheck="false" placeholder="apple	苹果	I eat an apple every morning.
-beautiful	美丽的	She has a beautiful voice.
-challenge	挑战	This project is a real challenge."></textarea>
+          <p class="hint">每行一个：英文单词 Tab 中文意思 Tab 英文例句。可选第 4 列填写音标，例如欧路的 <code>英 /'æpl/ 美 /'æpl/</code>；第 5 列可填音频地址。</p>
+          <textarea id="importText" spellcheck="false" placeholder="apple	苹果	I eat an apple every morning.	英 /'æpl/ 美 /'æpl/
+beautiful	美丽的	She has a beautiful voice.	英 /'bjuːtɪfʊl/ 美 /'bjutəfəl/
+challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'tʃælɪndʒ/"></textarea>
           <div class="toolbar row">
             <div class="row">
               <button class="btn primary" id="importBtn" type="button">导入单词</button>
@@ -679,7 +688,8 @@ challenge	挑战	This project is a real challenge."></textarea>
           <h2>格式例子</h2>
           <div class="example-box">
             <code>apple&nbsp;&nbsp;&nbsp;&nbsp;苹果&nbsp;&nbsp;&nbsp;&nbsp;I eat an apple every morning.</code><br />
-            <code>book&nbsp;&nbsp;&nbsp;&nbsp;书&nbsp;&nbsp;&nbsp;&nbsp;This book is useful.</code>
+            <code>book&nbsp;&nbsp;&nbsp;&nbsp;书&nbsp;&nbsp;&nbsp;&nbsp;This book is useful.</code><br />
+            <code>apple&nbsp;&nbsp;&nbsp;&nbsp;苹果&nbsp;&nbsp;&nbsp;&nbsp;I eat an apple every morning.&nbsp;&nbsp;&nbsp;&nbsp;英 /'æpl/ 美 /'æpl/</code>
           </div>
         </div>
       </section>
@@ -766,11 +776,11 @@ challenge	挑战	This project is a real challenge."></textarea>
 
     const demoText = [
       "apple\t苹果\tI eat an apple every morning.",
-      "beautiful\t美丽的\tShe has a beautiful voice.",
-      "challenge\t挑战\tThis project is a real challenge.",
-      "decide\t决定\tYou need to decide before Friday.",
-      "energy\t精力；能量\tMusic gives me energy.",
-      "future\t未来\tWe are planning for the future."
+      "beautiful\t美丽的\tShe has a beautiful voice.\t英 /'bjuːtɪfʊl/ 美 /'bjutəfəl/",
+      "challenge\t挑战\tThis project is a real challenge.\t英 /'tʃælɪn(d)ʒ/ 美 /'tʃælɪndʒ/",
+      "decide\t决定\tYou need to decide before Friday.\t英 /dɪ'saɪd/ 美 /dɪ'saɪd/",
+      "energy\t精力；能量\tMusic gives me energy.\t英 /'enədʒɪ/ 美 /'ɛnɚdʒi/",
+      "future\t未来\tWe are planning for the future.\t英 /'fjuːtʃə/ 美 /'fjutʃɚ/"
     ].join("\n");
 
     const defaultState = {
@@ -809,6 +819,7 @@ challenge	挑战	This project is a real challenge."></textarea>
       wordCard: $("wordCard"),
       cardMode: $("cardMode"),
       cardWord: $("cardWord"),
+      cardPhonetic: $("cardPhonetic"),
       cardMeaning: $("cardMeaning"),
       cardSentence: $("cardSentence"),
       answerArea: $("answerArea"),
@@ -867,6 +878,11 @@ challenge	挑战	This project is a real challenge."></textarea>
       return String(raw || "").trim().toLowerCase();
     }
 
+    function looksLikeAudio(value) {
+      return /\.(mp3|m4a|aac|wav|ogg|webm)(\?.*)?$/i.test(value)
+        || /^(audio\/|\.\/|\/|https?:\/\/|blob:|data:audio\/)/i.test(value);
+    }
+
     function parseImport(text) {
       return text
         .split(/\r?\n/)
@@ -875,12 +891,15 @@ challenge	挑战	This project is a real challenge."></textarea>
         .map((line) => {
           const parts = line.split("\t").map((part) => part.trim());
           if (parts.length < 3 || !parts[0]) return null;
+          const extra = parts[3] || "";
+          const hasAudioInFourthColumn = extra && looksLikeAudio(extra);
           return {
             id: normalizeWord(parts[0]),
             word: parts[0],
             meaning: parts[1] || "",
             sentence: parts[2] || "",
-            audio: parts[3] || ""
+            phonetic: hasAudioInFourthColumn ? "" : extra,
+            audio: hasAudioInFourthColumn ? extra : (parts[4] || "")
           };
         })
         .filter(Boolean);
@@ -954,6 +973,8 @@ challenge	挑战	This project is a real challenge."></textarea>
       if (!currentWord) {
         els.cardMode.textContent = state.activeReview ? "复习完成" : "今日完成";
         els.cardWord.textContent = state.activeReview ? "复习完成" : "今天的学习完成了";
+        els.cardPhonetic.hidden = true;
+        els.cardPhonetic.textContent = "";
         els.answerArea.hidden = false;
         els.cardMeaning.textContent = state.activeReview ? "复习列表已经清空。" : "可以去复习列表巩固不认识的词。";
         els.cardSentence.textContent = "";
@@ -967,6 +988,8 @@ challenge	挑战	This project is a real challenge."></textarea>
       els.cardMode.textContent = state.activeReview ? "复习中" : "今日学习";
       els.cardMode.classList.toggle("review", state.activeReview);
       els.cardWord.textContent = currentWord.word;
+      els.cardPhonetic.textContent = currentWord.phonetic || "";
+      els.cardPhonetic.hidden = !currentWord.phonetic;
       els.cardMeaning.textContent = currentWord.meaning;
       els.cardSentence.textContent = currentWord.sentence;
       els.answerArea.hidden = !showingAnswer;
@@ -1213,6 +1236,7 @@ challenge	挑战	This project is a real challenge."></textarea>
           word: String(word.word || word.id || "").trim(),
           meaning: String(word.meaning || "").trim(),
           sentence: String(word.sentence || "").trim(),
+          phonetic: String(word.phonetic || "").trim(),
           audio: String(word.audio || "").trim()
         }))
         .filter((word) => word.id && word.word);
