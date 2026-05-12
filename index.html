@@ -340,6 +340,19 @@
       font-size: 17px;
       border-top: 1px solid var(--line);
       overflow-wrap: anywhere;
+      user-select: text;
+      -webkit-user-select: text;
+      cursor: text;
+    }
+
+    .sentence-translation {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 15px;
+      overflow-wrap: anywhere;
+      user-select: text;
+      -webkit-user-select: text;
+      cursor: text;
     }
 
     .card-footer {
@@ -348,7 +361,8 @@
     }
 
     .audio-actions,
-    .answer-actions {
+    .answer-actions,
+    .sentence-actions {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
@@ -568,6 +582,7 @@
 
       .audio-actions,
       .answer-actions,
+      .sentence-actions,
       .toolbar {
         grid-template-columns: 1fr;
       }
@@ -628,12 +643,17 @@
               <div id="answerArea" hidden>
                 <div class="meaning" id="cardMeaning">中文意思</div>
                 <div class="sentence" id="cardSentence">Example sentence.</div>
+                <div class="sentence-translation" id="cardSentenceTranslation" hidden>例句翻译</div>
               </div>
             </div>
             <div class="card-footer">
               <div class="audio-actions">
                 <button class="btn" id="playWordBtn" type="button">播放单词</button>
                 <button class="btn" id="playSentenceBtn" type="button">播放例句</button>
+              </div>
+              <div class="sentence-actions">
+                <button class="btn" id="addSelectedWordBtn" type="button">加入陌生词</button>
+                <button class="btn" id="showAnswerBtn" type="button">显示答案</button>
               </div>
               <div class="answer-actions">
                 <button class="btn bad" id="unknownBtn" type="button">不认识</button>
@@ -672,10 +692,10 @@
             <h2>批量导入单词</h2>
             <span class="tag" id="importCount">0 行</span>
           </div>
-          <p class="hint">每行一个：英文单词 Tab 中文意思 Tab 英文例句。可选第 4 列填写音标，例如欧路的 <code>英 /'æpl/ 美 /'æpl/</code>；第 5 列可填音频地址。</p>
-          <textarea id="importText" spellcheck="false" placeholder="apple	苹果	I eat an apple every morning.	英 /'æpl/ 美 /'æpl/
-beautiful	美丽的	She has a beautiful voice.	英 /'bjuːtɪfʊl/ 美 /'bjutəfəl/
-challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'tʃælɪndʒ/"></textarea>
+          <p class="hint">每行一个：英文单词 Tab 中文意思 Tab 英文例句。第 4 列可填例句翻译；第 5 列可填音标，例如欧路的 <code>英 /'æpl/ 美 /'æpl/</code>；第 6 列可填音频地址。</p>
+          <textarea id="importText" spellcheck="false" placeholder="apple	苹果	I eat an apple every morning.	我每天早上吃一个苹果。	英 /'æpl/ 美 /'æpl/
+beautiful	美丽的	She has a beautiful voice.	她有一副美丽的嗓音。	英 /'bjuːtɪfʊl/ 美 /'bjutəfəl/
+challenge	挑战	This project is a real challenge.	这个项目是一个真正的挑战。	英 /'tʃælɪn(d)ʒ/ 美 /'tʃælɪndʒ/"></textarea>
           <div class="toolbar row">
             <div class="row">
               <button class="btn primary" id="importBtn" type="button">导入单词</button>
@@ -689,7 +709,7 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
           <div class="example-box">
             <code>apple&nbsp;&nbsp;&nbsp;&nbsp;苹果&nbsp;&nbsp;&nbsp;&nbsp;I eat an apple every morning.</code><br />
             <code>book&nbsp;&nbsp;&nbsp;&nbsp;书&nbsp;&nbsp;&nbsp;&nbsp;This book is useful.</code><br />
-            <code>apple&nbsp;&nbsp;&nbsp;&nbsp;苹果&nbsp;&nbsp;&nbsp;&nbsp;I eat an apple every morning.&nbsp;&nbsp;&nbsp;&nbsp;英 /'æpl/ 美 /'æpl/</code>
+            <code>apple&nbsp;&nbsp;&nbsp;&nbsp;苹果&nbsp;&nbsp;&nbsp;&nbsp;I eat an apple every morning.&nbsp;&nbsp;&nbsp;&nbsp;我每天早上吃一个苹果。&nbsp;&nbsp;&nbsp;&nbsp;英 /'æpl/ 美 /'æpl/</code>
           </div>
         </div>
       </section>
@@ -711,6 +731,20 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
             <div>
               <h2>暂无待复习单词</h2>
               <p class="hint">遇到不认识的词，它们会自动来到这里。</p>
+            </div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">
+            <h2>陌生单词组</h2>
+            <button class="btn ghost" id="clearUnknownBtn" type="button">清空陌生词</button>
+          </div>
+          <p class="hint">在学习卡片里选中例句中的英文单词，再点“加入陌生词”。如果词库里已有这个词，会自动带出中文释义。</p>
+          <div class="word-list" id="unknownList"></div>
+          <div class="empty" id="unknownEmpty">
+            <div>
+              <h2>暂无陌生单词</h2>
+              <p class="hint">选中例句里的生词后，可以收集到这里。</p>
             </div>
           </div>
         </div>
@@ -775,17 +809,18 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
     const todayKey = () => new Date().toISOString().slice(0, 10);
 
     const demoText = [
-      "apple\t苹果\tI eat an apple every morning.",
-      "beautiful\t美丽的\tShe has a beautiful voice.\t英 /'bjuːtɪfʊl/ 美 /'bjutəfəl/",
-      "challenge\t挑战\tThis project is a real challenge.\t英 /'tʃælɪn(d)ʒ/ 美 /'tʃælɪndʒ/",
-      "decide\t决定\tYou need to decide before Friday.\t英 /dɪ'saɪd/ 美 /dɪ'saɪd/",
-      "energy\t精力；能量\tMusic gives me energy.\t英 /'enədʒɪ/ 美 /'ɛnɚdʒi/",
-      "future\t未来\tWe are planning for the future.\t英 /'fjuːtʃə/ 美 /'fjutʃɚ/"
+      "apple\t苹果\tI eat an apple every morning.\t我每天早上吃一个苹果。\t英 /'æpl/ 美 /'æpl/",
+      "beautiful\t美丽的\tShe has a beautiful voice.\t她有一副美丽的嗓音。\t英 /'bjuːtɪfʊl/ 美 /'bjutəfəl/",
+      "challenge\t挑战\tThis project is a real challenge.\t这个项目是一个真正的挑战。\t英 /'tʃælɪn(d)ʒ/ 美 /'tʃælɪndʒ/",
+      "decide\t决定\tYou need to decide before Friday.\t你需要在周五之前决定。\t英 /dɪ'saɪd/ 美 /dɪ'saɪd/",
+      "energy\t精力；能量\tMusic gives me energy.\t音乐给我能量。\t英 /'enədʒɪ/ 美 /'ɛnɚdʒi/",
+      "future\t未来\tWe are planning for the future.\t我们正在为未来做计划。\t英 /'fjuːtʃə/ 美 /'fjutʃɚ/"
     ].join("\n");
 
     const defaultState = {
       words: [],
       reviewIds: [],
+      unknownWords: [],
       activeReview: false,
       settings: {
         lang: "en-US",
@@ -822,9 +857,12 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
       cardPhonetic: $("cardPhonetic"),
       cardMeaning: $("cardMeaning"),
       cardSentence: $("cardSentence"),
+      cardSentenceTranslation: $("cardSentenceTranslation"),
       answerArea: $("answerArea"),
       playWordBtn: $("playWordBtn"),
       playSentenceBtn: $("playSentenceBtn"),
+      addSelectedWordBtn: $("addSelectedWordBtn"),
+      showAnswerBtn: $("showAnswerBtn"),
       unknownBtn: $("unknownBtn"),
       knownBtn: $("knownBtn"),
       progressFill: $("progressFill"),
@@ -843,6 +881,8 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
       voiceNotice: $("voiceNotice"),
       reviewList: $("reviewList"),
       reviewEmpty: $("reviewEmpty"),
+      unknownList: $("unknownList"),
+      unknownEmpty: $("unknownEmpty"),
       backupText: $("backupText"),
       backupStatus: $("backupStatus")
     };
@@ -883,6 +923,12 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
         || /^(audio\/|\.\/|\/|https?:\/\/|blob:|data:audio\/)/i.test(value);
     }
 
+    function looksLikePhonetic(value) {
+      return /(^|\s)(英|美)\s*\//.test(value)
+        || /[æəɪʊʌɒɔɑɜθðʃʒŋːˈˌ]/.test(value)
+        || /^\/.+\/$/.test(value);
+    }
+
     function parseImport(text) {
       return text
         .split(/\r?\n/)
@@ -891,15 +937,34 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
         .map((line) => {
           const parts = line.split("\t").map((part) => part.trim());
           if (parts.length < 3 || !parts[0]) return null;
-          const extra = parts[3] || "";
-          const hasAudioInFourthColumn = extra && looksLikeAudio(extra);
+          let sentenceTranslation = "";
+          let phonetic = "";
+          let audio = "";
+
+          const fourth = parts[3] || "";
+          const fifth = parts[4] || "";
+          const sixth = parts[5] || "";
+
+          if (fourth) {
+            if (looksLikeAudio(fourth)) audio = fourth;
+            else if (looksLikePhonetic(fourth)) phonetic = fourth;
+            else sentenceTranslation = fourth;
+          }
+          if (fifth) {
+            if (looksLikeAudio(fifth)) audio = fifth;
+            else if (!phonetic && looksLikePhonetic(fifth)) phonetic = fifth;
+            else if (!sentenceTranslation) sentenceTranslation = fifth;
+          }
+          if (sixth && looksLikeAudio(sixth)) audio = sixth;
+
           return {
             id: normalizeWord(parts[0]),
             word: parts[0],
             meaning: parts[1] || "",
             sentence: parts[2] || "",
-            phonetic: hasAudioInFourthColumn ? "" : extra,
-            audio: hasAudioInFourthColumn ? extra : (parts[4] || "")
+            sentenceTranslation,
+            phonetic,
+            audio
           };
         })
         .filter(Boolean);
@@ -948,6 +1013,7 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
       renderLearn();
       renderSettings();
       renderReview();
+      renderUnknownWords();
     }
 
     function renderLearn() {
@@ -978,8 +1044,12 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
         els.answerArea.hidden = false;
         els.cardMeaning.textContent = state.activeReview ? "复习列表已经清空。" : "可以去复习列表巩固不认识的词。";
         els.cardSentence.textContent = "";
+        els.cardSentenceTranslation.hidden = true;
+        els.cardSentenceTranslation.textContent = "";
         els.playWordBtn.disabled = true;
         els.playSentenceBtn.disabled = true;
+        els.addSelectedWordBtn.disabled = true;
+        els.showAnswerBtn.disabled = true;
         els.unknownBtn.disabled = true;
         els.knownBtn.disabled = true;
         return;
@@ -992,9 +1062,13 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
       els.cardPhonetic.hidden = !currentWord.phonetic;
       els.cardMeaning.textContent = currentWord.meaning;
       els.cardSentence.textContent = currentWord.sentence;
+      els.cardSentenceTranslation.textContent = currentWord.sentenceTranslation || "";
+      els.cardSentenceTranslation.hidden = !currentWord.sentenceTranslation;
       els.answerArea.hidden = !showingAnswer;
       els.playWordBtn.disabled = false;
       els.playSentenceBtn.disabled = !currentWord.sentence;
+      els.addSelectedWordBtn.disabled = !currentWord.sentence;
+      els.showAnswerBtn.disabled = showingAnswer;
       els.unknownBtn.disabled = false;
       els.knownBtn.disabled = false;
     }
@@ -1019,8 +1093,24 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
           <div>
             <div>${escapeHtml(word.meaning)}</div>
             <p>${escapeHtml(word.sentence)}</p>
+            ${word.sentenceTranslation ? `<p>${escapeHtml(word.sentenceTranslation)}</p>` : ""}
           </div>
           <span class="tag review">待复习</span>
+        </div>
+      `).join("");
+    }
+
+    function renderUnknownWords() {
+      const items = Array.isArray(state.unknownWords) ? state.unknownWords : [];
+      els.unknownEmpty.hidden = items.length > 0;
+      els.unknownList.innerHTML = items.map((item) => `
+        <div class="word-item">
+          <strong>${escapeHtml(item.word)}</strong>
+          <div>
+            <div>${escapeHtml(item.meaning || "未填写释义")}</div>
+            <p>${escapeHtml(item.sourceSentence || "")}</p>
+          </div>
+          <span class="tag review">陌生词</span>
         </div>
       `).join("");
     }
@@ -1070,6 +1160,59 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
     function revealAnswer() {
       showingAnswer = true;
       renderLearn();
+    }
+
+    function cleanSelectedWord(text) {
+      return String(text || "")
+        .trim()
+        .replace(/^[^A-Za-z'-]+|[^A-Za-z'-]+$/g, "")
+        .toLowerCase();
+    }
+
+    function findMeaningForWord(word) {
+      const id = normalizeWord(word);
+      const matched = state.words.find((item) => item.id === id);
+      return matched ? matched.meaning : "";
+    }
+
+    function addSelectedWordToUnknown() {
+      if (!currentWord) return;
+      const selected = cleanSelectedWord(window.getSelection ? window.getSelection().toString() : "");
+      if (!selected) {
+        alert("请先在例句里选中一个英文单词，再点“加入陌生词”。");
+        return;
+      }
+
+      let meaning = findMeaningForWord(selected);
+      if (!meaning) {
+        meaning = prompt(`词库里还没有找到 “${selected}” 的中文释义，请手动填一下：`, "") || "";
+      }
+
+      if (!meaning.trim()) {
+        alert("没有填写中文释义，暂时没有加入陌生词。");
+        return;
+      }
+
+      state.unknownWords = Array.isArray(state.unknownWords) ? state.unknownWords : [];
+      const existing = state.unknownWords.find((item) => item.id === selected);
+      if (existing) {
+        existing.meaning = meaning.trim();
+        existing.sourceWord = currentWord.word;
+        existing.sourceSentence = currentWord.sentence;
+      } else {
+        state.unknownWords.push({
+          id: selected,
+          word: selected,
+          meaning: meaning.trim(),
+          sourceWord: currentWord.word,
+          sourceSentence: currentWord.sentence,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      saveState();
+      render();
+      alert(`已加入陌生单词组：${selected} - ${meaning.trim()}`);
     }
 
     function nextCard(markKnown) {
@@ -1236,6 +1379,7 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
           word: String(word.word || word.id || "").trim(),
           meaning: String(word.meaning || "").trim(),
           sentence: String(word.sentence || "").trim(),
+          sentenceTranslation: String(word.sentenceTranslation || "").trim(),
           phonetic: String(word.phonetic || "").trim(),
           audio: String(word.audio || "").trim()
         }))
@@ -1258,6 +1402,16 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
       return {
         words,
         reviewIds: Array.isArray(data.reviewIds) ? data.reviewIds.map(String).filter((id) => wordIds.has(id)) : [],
+        unknownWords: Array.isArray(data.unknownWords)
+          ? data.unknownWords.map((item) => ({
+              id: normalizeWord(item.id || item.word),
+              word: String(item.word || item.id || "").trim(),
+              meaning: String(item.meaning || "").trim(),
+              sourceWord: String(item.sourceWord || "").trim(),
+              sourceSentence: String(item.sourceSentence || "").trim(),
+              createdAt: String(item.createdAt || "")
+            })).filter((item) => item.id && item.word)
+          : [],
         activeReview: Boolean(data.activeReview),
         settings,
         progress
@@ -1309,6 +1463,15 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
         event.stopPropagation();
         revealAnswer();
         playAudioOrSpeak(currentWord.sentence, "sentence");
+      });
+      els.addSelectedWordBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        revealAnswer();
+        addSelectedWordToUnknown();
+      });
+      els.showAnswerBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        revealAnswer();
       });
       els.knownBtn.addEventListener("click", (event) => {
         event.stopPropagation();
@@ -1381,6 +1544,12 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
         if (!confirm("确定清空复习列表吗？")) return;
         state.reviewIds = [];
         state.activeReview = false;
+        saveState();
+        render();
+      });
+      $("clearUnknownBtn").addEventListener("click", () => {
+        if (!confirm("确定清空陌生单词组吗？")) return;
+        state.unknownWords = [];
         saveState();
         render();
       });
