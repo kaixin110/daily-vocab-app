@@ -1,0 +1,1393 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>每日背单词</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #687287;
+      --line: #dfe4ee;
+      --primary: #2b6bdc;
+      --primary-dark: #1e55b5;
+      --good: #16825d;
+      --bad: #c94b3a;
+      --warn: #a96500;
+      --soft-blue: #eaf1ff;
+      --soft-green: #e9f8f1;
+      --soft-red: #fff0ee;
+      --shadow: 0 14px 38px rgba(23, 32, 51, 0.08);
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(43, 107, 220, 0.08), transparent 280px),
+        var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    textarea,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .app {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(22px, env(safe-area-inset-bottom));
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 7vw, 46px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 4px 0 16px;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      position: sticky;
+      top: env(safe-area-inset-top);
+      z-index: 5;
+      backdrop-filter: blur(16px);
+    }
+
+    .tab {
+      min-height: 44px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .tab.active {
+      background: var(--ink);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(23, 32, 51, 0.16);
+    }
+
+    main {
+      display: grid;
+      gap: 16px;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .section + .section {
+      margin-top: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .hint,
+    .small {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .hint {
+      margin: 0 0 12px;
+      font-size: 14px;
+    }
+
+    .small {
+      font-size: 13px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 210px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      outline: none;
+      background: #fff;
+      color: var(--ink);
+      line-height: 1.55;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(43, 107, 220, 0.14);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .toolbar {
+      margin-top: 12px;
+      justify-content: space-between;
+    }
+
+    .btn {
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 8px;
+      background: #edf1f7;
+      color: var(--ink);
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn.primary:active {
+      background: var(--primary-dark);
+    }
+
+    .btn.good {
+      background: var(--good);
+      color: #fff;
+    }
+
+    .btn.bad {
+      background: var(--bad);
+      color: #fff;
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+    }
+
+    .btn.icon {
+      width: 44px;
+      padding: 0;
+      font-size: 19px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      min-height: 82px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .learn-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .card {
+      min-height: 380px;
+      border-radius: 8px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .word-card {
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .word-main {
+      display: grid;
+      gap: 14px;
+      align-content: center;
+      min-height: 210px;
+    }
+
+    .word {
+      font-size: clamp(42px, 11vw, 72px);
+      line-height: 1;
+      overflow-wrap: anywhere;
+      letter-spacing: 0;
+    }
+
+    .meaning {
+      font-size: clamp(24px, 6vw, 34px);
+      line-height: 1.25;
+      font-weight: 800;
+      color: var(--good);
+      overflow-wrap: anywhere;
+    }
+
+    .sentence {
+      padding-top: 8px;
+      color: #2b3548;
+      line-height: 1.6;
+      font-size: 17px;
+      border-top: 1px solid var(--line);
+      overflow-wrap: anywhere;
+    }
+
+    .card-footer {
+      display: grid;
+      gap: 12px;
+    }
+
+    .audio-actions,
+    .answer-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .mini-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .progress-bar {
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e7ebf2;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--good));
+      transition: width 0.25s ease;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: 44px minmax(72px, 1fr) 44px;
+      gap: 8px;
+      align-items: center;
+      margin: 12px 0 8px;
+    }
+
+    .stepper input {
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .empty {
+      min-height: 260px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      font-weight: 800;
+      color: #263149;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 0 12px;
+      outline: none;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--primary);
+      border: 0;
+      background: transparent;
+      min-height: 34px;
+    }
+
+    .notice {
+      display: none;
+      margin-top: 12px;
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: #fff6e8;
+      color: var(--warn);
+      border: 1px solid #ffd89c;
+      line-height: 1.5;
+    }
+
+    .notice.show {
+      display: block;
+    }
+
+    .word-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .word-item {
+      display: grid;
+      grid-template-columns: minmax(90px, 150px) minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .word-item strong {
+      overflow-wrap: anywhere;
+    }
+
+    .word-item p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--soft-blue);
+      color: var(--primary-dark);
+    }
+
+    .tag.review {
+      background: var(--soft-red);
+      color: var(--bad);
+    }
+
+    .example-box {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+      overflow-x: auto;
+    }
+
+    .example-box code {
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 820px) {
+      header {
+        display: block;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+        margin-top: 14px;
+      }
+
+      .tabs {
+        grid-template-columns: repeat(2, 1fr);
+        position: static;
+      }
+
+      .stats,
+      .learn-layout,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat {
+        min-height: 70px;
+      }
+
+      .card {
+        min-height: 430px;
+        padding: 18px;
+      }
+
+      .word-item {
+        grid-template-columns: 1fr;
+      }
+
+      .word-item .row {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .app {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .section,
+      .card,
+      .mini-panel {
+        border-radius: 8px;
+      }
+
+      .audio-actions,
+      .answer-actions,
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        display: grid;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>每日背单词</h1>
+        <p class="subtitle">批量导入，卡片学习，自动保存进度。</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn ghost" id="resetTodayBtn" type="button">重置今日</button>
+        <button class="btn ghost" id="clearAllBtn" type="button">清空数据</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="功能页">
+      <button class="tab active" data-view="learn" type="button">学习</button>
+      <button class="tab" data-view="import" type="button">导入</button>
+      <button class="tab" data-view="review" type="button">复习</button>
+      <button class="tab" data-view="settings" type="button">发音设置</button>
+    </nav>
+
+    <main>
+      <section class="view active" id="view-learn">
+        <div class="stats">
+          <div class="stat"><b id="totalWords">0</b><span class="small">词库单词</span></div>
+          <div class="stat"><b id="todayTarget">20</b><span class="small">今日计划</span></div>
+          <div class="stat"><b id="todayDone">0</b><span class="small">今日已学</span></div>
+          <div class="stat"><b id="reviewCount">0</b><span class="small">待复习</span></div>
+        </div>
+
+        <div id="learnEmpty" class="empty">
+          <div>
+            <h2>还没有单词</h2>
+            <p class="hint">先去“导入”页粘贴单词表，然后回来开始学习。</p>
+            <button class="btn primary" data-jump="import" type="button">去导入</button>
+          </div>
+        </div>
+
+        <div id="learnArea" class="learn-layout" hidden>
+          <article class="card word-card" id="wordCard" role="button" tabindex="0" aria-label="点击显示答案">
+            <div class="word-main">
+              <div class="tag" id="cardMode">今日学习</div>
+              <div class="word" id="cardWord">word</div>
+              <div id="answerArea" hidden>
+                <div class="meaning" id="cardMeaning">中文意思</div>
+                <div class="sentence" id="cardSentence">Example sentence.</div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="audio-actions">
+                <button class="btn" id="playWordBtn" type="button">播放单词</button>
+                <button class="btn" id="playSentenceBtn" type="button">播放例句</button>
+              </div>
+              <div class="answer-actions">
+                <button class="btn bad" id="unknownBtn" type="button">不认识</button>
+                <button class="btn good" id="knownBtn" type="button">认识</button>
+              </div>
+              <p class="small">点击卡片可显示中文意思和例句。</p>
+            </div>
+          </article>
+
+          <aside class="side">
+            <div class="mini-panel">
+              <h2>今日进度</h2>
+              <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+              <p class="small" id="progressText">0 / 20</p>
+            </div>
+            <div class="mini-panel">
+              <h2>今日数量</h2>
+              <div class="stepper">
+                <button class="btn icon" id="decreaseLimitBtn" type="button" aria-label="减少每日学习数量">−</button>
+                <input id="quickDailyLimit" type="number" min="1" max="200" step="1" aria-label="每日学习数量" />
+                <button class="btn icon" id="increaseLimitBtn" type="button" aria-label="增加每日学习数量">+</button>
+              </div>
+              <p class="small">可随时改，默认是 20。调大后今天会继续补新词；调小后今天学够就停止。</p>
+            </div>
+            <div class="mini-panel">
+              <h2>学习顺序</h2>
+              <p class="small" id="queueText">今天默认学习 20 个新单词。不认识的会进入复习列表。</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-import">
+        <div class="section">
+          <div class="section-title">
+            <h2>批量导入单词</h2>
+            <span class="tag" id="importCount">0 行</span>
+          </div>
+          <p class="hint">每行一个：英文单词 Tab 中文意思 Tab 英文例句。可选第 4 列填写音频地址，例如 <code>audio/apple.mp3</code>。</p>
+          <textarea id="importText" spellcheck="false" placeholder="apple	苹果	I eat an apple every morning.
+beautiful	美丽的	She has a beautiful voice.
+challenge	挑战	This project is a real challenge."></textarea>
+          <div class="toolbar row">
+            <div class="row">
+              <button class="btn primary" id="importBtn" type="button">导入单词</button>
+              <button class="btn" id="addDemoBtn" type="button">填入示例</button>
+            </div>
+            <span class="small">重复英文单词会自动更新意思和例句。</span>
+          </div>
+        </div>
+        <div class="section">
+          <h2>格式例子</h2>
+          <div class="example-box">
+            <code>apple&nbsp;&nbsp;&nbsp;&nbsp;苹果&nbsp;&nbsp;&nbsp;&nbsp;I eat an apple every morning.</code><br />
+            <code>book&nbsp;&nbsp;&nbsp;&nbsp;书&nbsp;&nbsp;&nbsp;&nbsp;This book is useful.</code>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-review">
+        <div class="section">
+          <div class="section-title">
+            <h2>复习列表</h2>
+            <button class="btn ghost" id="clearReviewBtn" type="button">清空复习</button>
+          </div>
+          <p class="hint">学习时点“不认识”的单词会出现在这里。点“开始复习”会优先练这些词。</p>
+          <div class="row">
+            <button class="btn primary" id="startReviewBtn" type="button">开始复习</button>
+          </div>
+        </div>
+        <div class="section">
+          <div class="word-list" id="reviewList"></div>
+          <div class="empty" id="reviewEmpty">
+            <div>
+              <h2>暂无待复习单词</h2>
+              <p class="hint">遇到不认识的词，它们会自动来到这里。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="section">
+          <div class="section-title">
+            <h2>发音设置</h2>
+            <button class="btn" id="testVoiceBtn" type="button">试听</button>
+          </div>
+          <div class="form-grid">
+            <label>
+              英语类型
+              <select id="voiceLang">
+                <option value="en-US">美式英语 en-US</option>
+                <option value="en-GB">英式英语 en-GB</option>
+              </select>
+            </label>
+            <label>
+              系统英文声音
+              <select id="voiceName"></select>
+            </label>
+            <label>
+              语速 <span id="rateValue">0.9</span>
+              <input id="voiceRate" type="range" min="0.6" max="1.2" step="0.1" />
+            </label>
+            <label>
+              音调 <span id="pitchValue">1.0</span>
+              <input id="voicePitch" type="range" min="0.5" max="2" step="0.1" />
+            </label>
+            <label>
+              每日学习数量
+              <input id="dailyLimit" type="number" min="1" max="200" step="1" />
+            </label>
+          </div>
+          <div class="notice" id="voiceNotice">没有找到系统英文声音。你仍可尝试播放；如果没有声音，请在系统或浏览器里添加英文语音。</div>
+          <p class="hint" style="margin-top: 12px;">在 iPhone Safari 上，首次朗读通常需要你先点一次播放按钮，这是浏览器的正常限制。</p>
+        </div>
+        <div class="section">
+          <div class="section-title">
+            <h2>备份与恢复</h2>
+            <span class="tag">JSON</span>
+          </div>
+          <p class="hint">导出会保存词库、学习进度、发音设置和复习列表。换手机或换浏览器时，把备份内容粘到下面再导入即可。</p>
+          <textarea id="backupText" spellcheck="false" placeholder="这里会显示导出的备份内容；也可以把备份 JSON 粘贴到这里恢复。"></textarea>
+          <div class="toolbar row">
+            <div class="row">
+              <button class="btn primary" id="exportBackupBtn" type="button">导出备份</button>
+              <button class="btn" id="copyBackupBtn" type="button">复制备份</button>
+              <button class="btn good" id="importBackupBtn" type="button">导入备份</button>
+            </div>
+            <span class="small" id="backupStatus">建议定期导出一份备份文件。</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const STORE_KEY = "word_app_single_file_v1";
+    const todayKey = () => new Date().toISOString().slice(0, 10);
+
+    const demoText = [
+      "apple\t苹果\tI eat an apple every morning.",
+      "beautiful\t美丽的\tShe has a beautiful voice.",
+      "challenge\t挑战\tThis project is a real challenge.",
+      "decide\t决定\tYou need to decide before Friday.",
+      "energy\t精力；能量\tMusic gives me energy.",
+      "future\t未来\tWe are planning for the future."
+    ].join("\n");
+
+    const defaultState = {
+      words: [],
+      reviewIds: [],
+      activeReview: false,
+      settings: {
+        lang: "en-US",
+        voiceName: "",
+        rate: 0.9,
+        pitch: 1,
+        dailyLimit: 20
+      },
+      progress: {
+        date: todayKey(),
+        learnedIds: [],
+        cursor: 0
+      }
+    };
+
+    let state = loadState();
+    let currentWord = null;
+    let showingAnswer = false;
+    let voices = [];
+    let playableAudio = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    const els = {
+      totalWords: $("totalWords"),
+      todayTarget: $("todayTarget"),
+      todayDone: $("todayDone"),
+      reviewCount: $("reviewCount"),
+      learnEmpty: $("learnEmpty"),
+      learnArea: $("learnArea"),
+      wordCard: $("wordCard"),
+      cardMode: $("cardMode"),
+      cardWord: $("cardWord"),
+      cardMeaning: $("cardMeaning"),
+      cardSentence: $("cardSentence"),
+      answerArea: $("answerArea"),
+      playWordBtn: $("playWordBtn"),
+      playSentenceBtn: $("playSentenceBtn"),
+      unknownBtn: $("unknownBtn"),
+      knownBtn: $("knownBtn"),
+      progressFill: $("progressFill"),
+      progressText: $("progressText"),
+      queueText: $("queueText"),
+      importText: $("importText"),
+      importCount: $("importCount"),
+      voiceLang: $("voiceLang"),
+      voiceName: $("voiceName"),
+      voiceRate: $("voiceRate"),
+      voicePitch: $("voicePitch"),
+      rateValue: $("rateValue"),
+      pitchValue: $("pitchValue"),
+      dailyLimit: $("dailyLimit"),
+      quickDailyLimit: $("quickDailyLimit"),
+      voiceNotice: $("voiceNotice"),
+      reviewList: $("reviewList"),
+      reviewEmpty: $("reviewEmpty"),
+      backupText: $("backupText"),
+      backupStatus: $("backupStatus")
+    };
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+        if (!saved) return structuredClone(defaultState);
+        return {
+          ...structuredClone(defaultState),
+          ...saved,
+          settings: { ...defaultState.settings, ...(saved.settings || {}) },
+          progress: { ...defaultState.progress, ...(saved.progress || {}) }
+        };
+      } catch {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    }
+
+    function ensureToday() {
+      if (state.progress.date !== todayKey()) {
+        state.progress = { date: todayKey(), learnedIds: [], cursor: state.progress.cursor || 0 };
+        state.activeReview = false;
+        saveState();
+      }
+    }
+
+    function normalizeWord(raw) {
+      return String(raw || "").trim().toLowerCase();
+    }
+
+    function parseImport(text) {
+      return text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const parts = line.split("\t").map((part) => part.trim());
+          if (parts.length < 3 || !parts[0]) return null;
+          return {
+            id: normalizeWord(parts[0]),
+            word: parts[0],
+            meaning: parts[1] || "",
+            sentence: parts[2] || "",
+            audio: parts[3] || ""
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function todayQueue() {
+      ensureToday();
+      if (state.activeReview) {
+        return state.reviewIds.map((id) => state.words.find((word) => word.id === id)).filter(Boolean);
+      }
+
+      const learned = new Set(state.progress.learnedIds);
+      const remaining = Math.max(0, state.settings.dailyLimit - learned.size);
+      if (!remaining) return [];
+      const start = Math.max(0, state.progress.cursor || 0);
+      const fresh = state.words.slice(start).filter((word) => !learned.has(word.id));
+      return fresh.slice(0, remaining);
+    }
+
+    function pickCurrentWord() {
+      const queue = todayQueue();
+      if (!queue.length) {
+        currentWord = null;
+        return;
+      }
+      const learned = new Set(state.progress.learnedIds);
+      currentWord = state.activeReview ? queue[0] : queue.find((word) => !learned.has(word.id)) || null;
+    }
+
+    function showView(name) {
+      document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === name));
+      document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `view-${name}`));
+      render();
+    }
+
+    function render() {
+      ensureToday();
+      pickCurrentWord();
+
+      els.totalWords.textContent = state.words.length;
+      els.todayTarget.textContent = state.settings.dailyLimit;
+      els.todayDone.textContent = state.progress.learnedIds.length;
+      els.reviewCount.textContent = state.reviewIds.length;
+      els.quickDailyLimit.value = state.settings.dailyLimit;
+
+      renderLearn();
+      renderSettings();
+      renderReview();
+    }
+
+    function renderLearn() {
+      const hasWords = state.words.length > 0;
+      els.learnEmpty.hidden = hasWords;
+      els.learnArea.hidden = !hasWords;
+      if (!hasWords) return;
+
+      const done = state.activeReview
+        ? Math.max(0, state.reviewIds.length ? 0 : state.settings.dailyLimit)
+        : Math.min(state.progress.learnedIds.length, state.settings.dailyLimit);
+      const total = state.activeReview ? Math.max(1, state.reviewIds.length) : state.settings.dailyLimit;
+      const percent = state.activeReview ? 0 : Math.min(100, Math.round((done / total) * 100));
+
+      els.progressFill.style.width = `${percent}%`;
+      els.progressText.textContent = state.activeReview
+        ? `复习剩余 ${state.reviewIds.length} 个`
+        : `${done} / ${state.settings.dailyLimit}`;
+      els.queueText.textContent = state.activeReview
+        ? "当前是复习模式。点“认识”会把这个词移出复习列表。"
+        : "今天默认学习新词。点“不认识”的单词会进入复习列表。";
+
+      if (!currentWord) {
+        els.cardMode.textContent = state.activeReview ? "复习完成" : "今日完成";
+        els.cardWord.textContent = state.activeReview ? "复习完成" : "今天的学习完成了";
+        els.answerArea.hidden = false;
+        els.cardMeaning.textContent = state.activeReview ? "复习列表已经清空。" : "可以去复习列表巩固不认识的词。";
+        els.cardSentence.textContent = "";
+        els.playWordBtn.disabled = true;
+        els.playSentenceBtn.disabled = true;
+        els.unknownBtn.disabled = true;
+        els.knownBtn.disabled = true;
+        return;
+      }
+
+      els.cardMode.textContent = state.activeReview ? "复习中" : "今日学习";
+      els.cardMode.classList.toggle("review", state.activeReview);
+      els.cardWord.textContent = currentWord.word;
+      els.cardMeaning.textContent = currentWord.meaning;
+      els.cardSentence.textContent = currentWord.sentence;
+      els.answerArea.hidden = !showingAnswer;
+      els.playWordBtn.disabled = false;
+      els.playSentenceBtn.disabled = !currentWord.sentence;
+      els.unknownBtn.disabled = false;
+      els.knownBtn.disabled = false;
+    }
+
+    function renderSettings() {
+      els.voiceLang.value = state.settings.lang;
+      els.voiceRate.value = state.settings.rate;
+      els.voicePitch.value = state.settings.pitch;
+      els.dailyLimit.value = state.settings.dailyLimit;
+      els.quickDailyLimit.value = state.settings.dailyLimit;
+      els.rateValue.textContent = Number(state.settings.rate).toFixed(1);
+      els.pitchValue.textContent = Number(state.settings.pitch).toFixed(1);
+      populateVoiceSelect();
+    }
+
+    function renderReview() {
+      const reviewWords = state.reviewIds.map((id) => state.words.find((word) => word.id === id)).filter(Boolean);
+      els.reviewEmpty.hidden = reviewWords.length > 0;
+      els.reviewList.innerHTML = reviewWords.map((word) => `
+        <div class="word-item">
+          <strong>${escapeHtml(word.word)}</strong>
+          <div>
+            <div>${escapeHtml(word.meaning)}</div>
+            <p>${escapeHtml(word.sentence)}</p>
+          </div>
+          <span class="tag review">待复习</span>
+        </div>
+      `).join("");
+    }
+
+    function populateVoiceSelect() {
+      const englishVoices = voices.filter((voice) => /^en(-|_)?/i.test(voice.lang || ""));
+      const preferred = englishVoices.filter((voice) => voice.lang === state.settings.lang);
+      const list = preferred.length ? preferred : englishVoices;
+      const current = state.settings.voiceName;
+
+      els.voiceName.innerHTML = "";
+      if (!list.length) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "未找到英文声音";
+        els.voiceName.appendChild(option);
+        els.voiceNotice.classList.add("show");
+        return;
+      }
+
+      els.voiceNotice.classList.remove("show");
+      list.forEach((voice) => {
+        const option = document.createElement("option");
+        option.value = voice.name;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        els.voiceName.appendChild(option);
+      });
+
+      if (current && list.some((voice) => voice.name === current)) {
+        els.voiceName.value = current;
+      } else {
+        els.voiceName.value = list[0].name;
+        state.settings.voiceName = list[0].name;
+        saveState();
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function revealAnswer() {
+      showingAnswer = true;
+      renderLearn();
+    }
+
+    function nextCard(markKnown) {
+      if (!currentWord) return;
+      const id = currentWord.id;
+
+      if (markKnown) {
+        if (!state.progress.learnedIds.includes(id) && !state.activeReview) {
+          state.progress.learnedIds.push(id);
+        }
+        state.reviewIds = state.reviewIds.filter((reviewId) => reviewId !== id);
+      } else {
+        if (!state.reviewIds.includes(id)) state.reviewIds.push(id);
+        if (!state.progress.learnedIds.includes(id) && !state.activeReview) {
+          state.progress.learnedIds.push(id);
+        }
+      }
+
+      if (!state.activeReview) {
+        const index = state.words.findIndex((word) => word.id === id);
+        if (index >= state.progress.cursor) state.progress.cursor = index + 1;
+      }
+
+      if (state.activeReview && !markKnown) {
+        state.reviewIds = state.reviewIds.filter((reviewId) => reviewId !== id);
+        state.reviewIds.push(id);
+      }
+
+      showingAnswer = false;
+      saveState();
+      render();
+    }
+
+    async function playAudioOrSpeak(text, type) {
+      if (!currentWord || !text) return;
+      const candidates = [];
+      if (type === "word" && currentWord.audio) candidates.push(currentWord.audio);
+      if (type === "word") candidates.push(`audio/${encodeURIComponent(currentWord.word)}.mp3`);
+
+      for (const src of candidates) {
+        const ok = await tryAudio(src);
+        if (ok) return;
+      }
+      speak(text);
+    }
+
+    function tryAudio(src) {
+      return new Promise((resolve) => {
+        if (!src) return resolve(false);
+        if (playableAudio) {
+          playableAudio.pause();
+          playableAudio = null;
+        }
+        const audio = new Audio(src);
+        playableAudio = audio;
+        let settled = false;
+        const done = (ok) => {
+          if (settled) return;
+          settled = true;
+          audio.removeEventListener("canplaythrough", onCanPlay);
+          audio.removeEventListener("error", onError);
+          resolve(ok);
+        };
+        const onCanPlay = () => {
+          audio.play().then(() => done(true)).catch(() => done(false));
+        };
+        const onError = () => done(false);
+        audio.addEventListener("canplaythrough", onCanPlay, { once: true });
+        audio.addEventListener("error", onError, { once: true });
+        audio.load();
+        setTimeout(() => done(false), 900);
+      });
+    }
+
+    function speak(text) {
+      if (!("speechSynthesis" in window)) {
+        alert("当前浏览器不支持 SpeechSynthesis 朗读。");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = state.settings.lang;
+      utterance.rate = Number(state.settings.rate);
+      utterance.pitch = Number(state.settings.pitch);
+      const chosen = voices.find((voice) => voice.name === state.settings.voiceName);
+      if (chosen) utterance.voice = chosen;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function refreshVoices() {
+      voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+      populateVoiceSelect();
+    }
+
+    function importWords() {
+      const imported = parseImport(els.importText.value);
+      if (!imported.length) {
+        alert("没有识别到有效单词。请确认每行包含：英文单词 Tab 中文意思 Tab 英文例句。");
+        return;
+      }
+
+      const byId = new Map(state.words.map((word) => [word.id, word]));
+      imported.forEach((word) => byId.set(word.id, { ...(byId.get(word.id) || {}), ...word }));
+      state.words = Array.from(byId.values());
+      saveState();
+      alert(`导入成功：${imported.length} 行。`);
+      showView("learn");
+    }
+
+    function updateDailyLimit(value) {
+      const next = Math.max(1, Math.min(200, Number(value) || defaultState.settings.dailyLimit));
+      state.settings.dailyLimit = next;
+      saveState();
+      render();
+    }
+
+    function buildBackupText() {
+      const backup = {
+        app: "每日背单词",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: state
+      };
+      return JSON.stringify(backup, null, 2);
+    }
+
+    function exportBackup() {
+      const text = buildBackupText();
+      const filename = `背单词备份-${todayKey()}.json`;
+      els.backupText.value = text;
+      els.backupStatus.textContent = `已生成备份：${state.words.length} 个单词。`;
+
+      const blob = new Blob([text], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function copyBackup() {
+      const text = els.backupText.value.trim() || buildBackupText();
+      els.backupText.value = text;
+      try {
+        await navigator.clipboard.writeText(text);
+        els.backupStatus.textContent = "备份内容已复制。";
+      } catch {
+        els.backupText.focus();
+        els.backupText.select();
+        els.backupStatus.textContent = "已选中备份内容，请手动复制。";
+      }
+    }
+
+    function sanitizeImportedState(raw) {
+      const data = raw && raw.data ? raw.data : raw;
+      if (!data || !Array.isArray(data.words)) return null;
+
+      const words = data.words
+        .map((word) => ({
+          id: normalizeWord(word.id || word.word),
+          word: String(word.word || word.id || "").trim(),
+          meaning: String(word.meaning || "").trim(),
+          sentence: String(word.sentence || "").trim(),
+          audio: String(word.audio || "").trim()
+        }))
+        .filter((word) => word.id && word.word);
+
+      const wordIds = new Set(words.map((word) => word.id));
+      const settings = { ...defaultState.settings, ...(data.settings || {}) };
+      settings.lang = settings.lang === "en-GB" ? "en-GB" : "en-US";
+      settings.rate = Math.max(0.6, Math.min(1.2, Number(settings.rate) || defaultState.settings.rate));
+      settings.pitch = Math.max(0.5, Math.min(2, Number(settings.pitch) || defaultState.settings.pitch));
+      settings.dailyLimit = Math.max(1, Math.min(200, Number(settings.dailyLimit) || defaultState.settings.dailyLimit));
+
+      const progress = { ...defaultState.progress, ...(data.progress || {}) };
+      progress.date = String(progress.date || todayKey());
+      progress.learnedIds = Array.isArray(progress.learnedIds)
+        ? progress.learnedIds.map(String).filter((id) => wordIds.has(id))
+        : [];
+      progress.cursor = Math.max(0, Math.min(words.length, Number(progress.cursor) || 0));
+
+      return {
+        words,
+        reviewIds: Array.isArray(data.reviewIds) ? data.reviewIds.map(String).filter((id) => wordIds.has(id)) : [],
+        activeReview: Boolean(data.activeReview),
+        settings,
+        progress
+      };
+    }
+
+    function importBackup() {
+      let parsed;
+      try {
+        parsed = JSON.parse(els.backupText.value);
+      } catch {
+        alert("备份内容不是有效 JSON。请确认粘贴的是“导出备份”生成的内容。");
+        return;
+      }
+
+      const importedState = sanitizeImportedState(parsed);
+      if (!importedState) {
+        alert("没有识别到有效备份。备份里至少需要包含 words 单词列表。");
+        return;
+      }
+
+      if (!confirm(`确定导入备份吗？当前数据会被替换为备份中的 ${importedState.words.length} 个单词。`)) return;
+      state = importedState;
+      currentWord = null;
+      showingAnswer = false;
+      saveState();
+      els.backupStatus.textContent = `导入成功：${state.words.length} 个单词。`;
+      alert("备份导入成功。");
+      showView("learn");
+    }
+
+    function bindEvents() {
+      document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => showView(tab.dataset.view)));
+      document.querySelectorAll("[data-jump]").forEach((btn) => btn.addEventListener("click", () => showView(btn.dataset.jump)));
+
+      els.wordCard.addEventListener("click", revealAnswer);
+      els.wordCard.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          revealAnswer();
+        }
+      });
+
+      els.playWordBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        playAudioOrSpeak(currentWord.word, "word");
+      });
+      els.playSentenceBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        playAudioOrSpeak(currentWord.sentence, "sentence");
+      });
+      els.knownBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        nextCard(true);
+      });
+      els.unknownBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        nextCard(false);
+      });
+
+      $("importBtn").addEventListener("click", importWords);
+      $("addDemoBtn").addEventListener("click", () => {
+        els.importText.value = demoText;
+        els.importCount.textContent = `${parseImport(els.importText.value).length} 行`;
+      });
+      els.importText.addEventListener("input", () => {
+        els.importCount.textContent = `${parseImport(els.importText.value).length} 行`;
+      });
+
+      els.voiceLang.addEventListener("change", () => {
+        state.settings.lang = els.voiceLang.value;
+        state.settings.voiceName = "";
+        saveState();
+        renderSettings();
+      });
+      els.voiceName.addEventListener("change", () => {
+        state.settings.voiceName = els.voiceName.value;
+        saveState();
+      });
+      els.voiceRate.addEventListener("input", () => {
+        state.settings.rate = Number(els.voiceRate.value);
+        saveState();
+        renderSettings();
+      });
+      els.voicePitch.addEventListener("input", () => {
+        state.settings.pitch = Number(els.voicePitch.value);
+        saveState();
+        renderSettings();
+      });
+      els.dailyLimit.addEventListener("change", () => {
+        updateDailyLimit(els.dailyLimit.value);
+      });
+      els.quickDailyLimit.addEventListener("change", () => {
+        updateDailyLimit(els.quickDailyLimit.value);
+      });
+      $("decreaseLimitBtn").addEventListener("click", (event) => {
+        event.stopPropagation();
+        updateDailyLimit(state.settings.dailyLimit - 1);
+      });
+      $("increaseLimitBtn").addEventListener("click", (event) => {
+        event.stopPropagation();
+        updateDailyLimit(state.settings.dailyLimit + 1);
+      });
+
+      $("testVoiceBtn").addEventListener("click", () => speak("This is a pronunciation test."));
+      $("exportBackupBtn").addEventListener("click", exportBackup);
+      $("copyBackupBtn").addEventListener("click", copyBackup);
+      $("importBackupBtn").addEventListener("click", importBackup);
+      $("startReviewBtn").addEventListener("click", () => {
+        if (!state.reviewIds.length) {
+          alert("现在没有待复习单词。");
+          return;
+        }
+        state.activeReview = true;
+        showingAnswer = false;
+        saveState();
+        showView("learn");
+      });
+      $("clearReviewBtn").addEventListener("click", () => {
+        if (!confirm("确定清空复习列表吗？")) return;
+        state.reviewIds = [];
+        state.activeReview = false;
+        saveState();
+        render();
+      });
+      $("resetTodayBtn").addEventListener("click", () => {
+        if (!confirm("确定重置今天的学习进度吗？词库和复习列表会保留。")) return;
+        state.progress = { date: todayKey(), learnedIds: [], cursor: 0 };
+        state.activeReview = false;
+        showingAnswer = false;
+        saveState();
+        render();
+      });
+      $("clearAllBtn").addEventListener("click", () => {
+        if (!confirm("确定清空所有单词、进度和设置吗？")) return;
+        localStorage.removeItem(STORE_KEY);
+        state = structuredClone(defaultState);
+        currentWord = null;
+        showingAnswer = false;
+        render();
+      });
+    }
+
+    bindEvents();
+    render();
+    if ("speechSynthesis" in window) {
+      refreshVoices();
+      window.speechSynthesis.onvoiceschanged = refreshVoices;
+      setTimeout(refreshVoices, 350);
+      setTimeout(refreshVoices, 1000);
+    } else {
+      els.voiceNotice.textContent = "当前浏览器不支持 SpeechSynthesis 朗读。";
+      els.voiceNotice.classList.add("show");
+    }
+  </script>
+</body>
+</html>
