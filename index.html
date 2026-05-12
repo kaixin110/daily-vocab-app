@@ -1307,6 +1307,7 @@ challenge	挑战	This project is a real challenge.	英 /'tʃælɪn(d)ʒ/ 美 /'t
       });
       els.playSentenceBtn.addEventListener("click", (event) => {
         event.stopPropagation();
+        revealAnswer();
         playAudioOrSpeak(currentWord.sentence, "sentence");
       });
       els.knownBtn.addEventListener("click", (event) => {
